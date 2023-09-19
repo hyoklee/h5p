@@ -12,8 +12,9 @@ The existing HDF5 Parallel Library has many flaws.
 
 * Can't build parallel.
 * Can't test parallel.
-* Can't run parallel without haning or exiting cleanly.
+* Can't run parallel without hanging or exiting cleanly.
 
 ## Source
+
 * h.bat: test script for Intel OneAPI on Windows
 
