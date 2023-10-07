@@ -6,6 +6,9 @@
 [![mac-13 CMake clang15 debug gfortran mpich sf ](https://github.com/hyoklee/hdf5/actions/workflows/mac-clang15-cmake.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/mac-clang15-cmake.yml)
 [![mac-13 CMake Xcode clang15 debug mpich sf ](https://github.com/hyoklee/hdf5/actions/workflows/mac-clang15-xcode.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/mac-clang15-xcode.yml)
 [![mac-13 CMake clang17 debug flang java mpich sf ](https://github.com/hyoklee/hdf5/actions/workflows/mac-cmake-flang-mpich.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/mac-cmake-flang-mpich.yml)
+
+[![windows ninja icx ifx parallel sf](https://github.com/hyoklee/hdf5/actions/workflows/win-ninja-icx-f-p-sf.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/win-ninja-icx-f-p-sf.yml)
+
 ## Goals
 
 * Rewrite HDF5 model and format for parallel processing on distributed systems.
