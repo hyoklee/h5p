@@ -37,13 +37,13 @@ Hide MPI/Dask/Spark calls.
 
 ```c
 h5p_use("mpi") /*  replace mpi with dask or spark */
-fp = h5p_create("test.h5")
-h5p_write(fp, "/g/d", data)
-h5p_close(fp)
+H5PFILE* fp = h5p_create("test.h5");
+h5p_write(fp, "/g/d", data);
+h5p_close(fp);
 
-fp = h5p_open("test.h5")
-data = h5p_read(fp, "/g/d")
-hp_close(fp)
+H5PFILE* fp = h5p_open("test.h5");
+data = h5p_read(fp, "/g/d");
+hp_close(fp);
 ```
 
 ## Experiments
