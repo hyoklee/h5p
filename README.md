@@ -35,7 +35,7 @@ You need to use Pandas to convert parquet to HDF5.
 
 Hide MPI/Dask/Spark calls.
 
-``` C
+```c
 h5p_use("mpi") /*  replace mpi with dask or spark */
 fp = h5p_create("test.h5")
 h5p_write(fp, "/g/d", data)
