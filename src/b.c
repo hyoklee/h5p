@@ -1,7 +1,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <zlib.h>
+// #include <zlib.h>
 
 // Define the compression level
 #define Z_BEST_COMPRESSION 9
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
   strm.zalloc = Z_NULL;
   strm.zfree = Z_NULL;
   strm.opaque = Z_NULL;
-  deflateInit(&strm, Z_BEST_COMPRESSION);
+  //   deflateInit(&strm, Z_BEST_COMPRESSION);
 
   // Start the parallel I/O loop
   for (int i = 0; i < size; i++) {
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     strm.next_out = output_buffer;
     strm.avail_out = CHUNK_SIZE * Z_BEST_COMPRESSION;
 
-    deflate(&strm, Z_FINISH);
+    //    deflate(&strm, Z_FINISH);
 
     // Write the compressed data to the output file
     MPI_File_write_at(output_file, i * CHUNK_SIZE, output_buffer,
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Finish the compression stream
-  deflateEnd(&strm);
+  //   deflateEnd(&strm);
 
   // Close the input and output files
   MPI_File_close(&input_file);
