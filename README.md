@@ -37,11 +37,11 @@ Hide MPI/Dask/Spark calls.
 #include <h5p.h>
 
 h5p_use("mpi"); /*  replace mpi with dask or spark */
-H5P_FILE* fp = h5p_create("s3://test.h5p");
+H5P_FILE* fp = h5p_open("s3://test.h5p", "w");
 h5p_write(fp, "/g/d", data);
 h5p_close(fp);
 
-H5P_FILE* fp = h5p_open("s3://test.h5p");
+H5P_FILE* fp = h5p_open("s3://test.h5p", "r");
 data = h5p_read(fp, "/g/d");
 h5p_close(fp);
 ```
