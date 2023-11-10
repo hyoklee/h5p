@@ -13,12 +13,12 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "main-" ]
+    branches: [ "main" ]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ "main-" ]
-  schedule:
-    - cron: '29 2 * * 5'
+    branches: [ "main" ]
+#  schedule:
+#    - cron: '29 2 * * 5'
 
 jobs:
   analyze:
@@ -47,6 +47,11 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+
+    - name: Install System dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y libaec-dev zlib1g-dev automake autoconf libcurl4-openssl-dev libjpeg-dev wget curl bzip2 m4 flex bison cmake libzip-dev doxygen openssl libtool libtool-bin build-essential libncurses-dev libquadmath0 libstdc++6 libxml2
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
