@@ -3,3 +3,9 @@ all:
 	mpicc b.c -o b -lz
 	mpirun -np 2 ./b
 	zlib-flate -uncompress < output.dat.gz > output.dat
+clean:
+	rm -rf *.dSYM
+	rm output.dat b
+
+
+
