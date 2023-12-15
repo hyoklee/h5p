@@ -9,12 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4	
+      uses: actions/checkout@v4
     - name: Install Fortran
       uses: fortran-lang/setup-fortran@v1
       with:
         compiler: gcc
-        version: 13	
+        version: 13
     - name: Checkout Spack
       uses: actions/checkout@v4
       with:
@@ -32,6 +32,5 @@ jobs:
         spack load py-ipython
         spack load py-pip
         pip install pytest-mpi
-	ls test
+        ls test
         python test/demo_h5.py
-	
