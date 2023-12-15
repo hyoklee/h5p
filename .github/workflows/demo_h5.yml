@@ -10,6 +10,7 @@ jobs:
     steps:
     - name: Install h5py mpi4py
       run: |
+        sudo add install universe
         sudo apt install python3-h5py python3-mpi4py
     - name: Checkout
       uses: actions/checkout@v4
