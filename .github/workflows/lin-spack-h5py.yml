@@ -33,4 +33,4 @@ jobs:
         spack load py-pip
         pip install pytest-mpi
         ls test
-        mpirun -np 2 python demo_h5.py
+        mpirun -np 2 python test/demo_h5.py
