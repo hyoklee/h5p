@@ -34,3 +34,4 @@ jobs:
         pip install pytest-mpi
         ls test
         mpirun -np 2 python test/demo_h5.py
+	h5dump parallel_test.hdf5
