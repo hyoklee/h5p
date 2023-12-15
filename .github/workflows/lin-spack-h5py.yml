@@ -1,14 +1,8 @@
-name: linux spack h5py
+name: lin spack h5py
 
 on:
   push:
-    branches: [ develop ]
-    paths-ignore:
-    - 'doc/**'
-    - 'release_docs/**'
-  pull_request:
-    branches: [ develop ]
-  workflow_dispatch:
+    branches: [ main ]
 
 jobs:
   build:
