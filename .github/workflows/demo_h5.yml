@@ -8,6 +8,11 @@ jobs:
   analyze:
     runs-on: ubuntu-latest
     steps:
-    - name: Install mpi4py
+    - name: Install h5py mpi4py
       run: |
-        sudo apt install python3-mpi4py
+        sudo apt install h5py python3-mpi4py
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Test demo_h5
+      run: |
+        python test/demo_h5.py
