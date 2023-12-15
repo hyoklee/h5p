@@ -1,0 +1,13 @@
+name: "demo_h5"
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install mpi4py
+      run: |
+        sudo apt install python3-mpi4py
