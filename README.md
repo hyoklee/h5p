@@ -4,15 +4,25 @@
 <tr>
   <th>Test</th><th>Status</th>
 </tr>
+<tr>
+  <td rowspan=2>Linux</td>
+  <td>
+[![linux CMake icx sf](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-sf.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-sf.yml)  
+  </td>
+</tr>
+<tr>
+  <td>
+![linux autotools icx sf debug](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-auto-sf-debug.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-auto-sf-debug.yml) 
+  </td>
+</tr>
+<tr>
+<td>
+Windows
+</td>
+<td>
+![windows ninja icx ifx parallel sf](https://github.com/hyoklee/hdf5/actions/workflows/win-ninja-icx-f-p-sf.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/win-ninja-icx-f-p-sf.yml)
+</td>
 </table>
-
-| Test  | Status |
-| ------| ------ |
-| Linux |
-[![linux CMake icx sf](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-sf.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-sf.yml) 
-![linux autotools icx sf debug](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-auto-sf-debug.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-auto-sf-debug.yml) |
-| Windows | [![windows ninja icx ifx parallel sf](https://github.com/hyoklee/hdf5/actions/workflows/win-ninja-icx-f-p-sf.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/win-ninja-icx-f-p-sf.yml) |
-
 
 ## Goals
 
