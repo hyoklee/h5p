@@ -1,30 +1,5 @@
 # h5p
 
-<table>
-<tr>
-  <th>Test</th><th>Status</th>
-</tr>
-<tr>
-  <td rowspan=2>Linux</td>
-  <td>
-[![linux CMake icx sf](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-sf.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-sf.yml)  
-  </td>
-</tr>
-<tr>
-  <td>
-![linux autotools icx sf debug](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-auto-sf-debug.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/linux-icx-auto-sf-debug.yml) 
-  </td>
-</tr>
-<tr>
-<td>
-Windows
-</td>
-<td>
-![windows ninja icx ifx parallel sf](https://github.com/hyoklee/hdf5/actions/workflows/win-ninja-icx-f-p-sf.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/win-ninja-icx-f-p-sf.yml)
-</td>
-</tr>
-</table>
-
 ## Goals
 
 * Rewrite HDF5 model and format for parallel processing on distributed systems.
