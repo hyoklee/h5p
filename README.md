@@ -1,6 +1,11 @@
 # h5p
 
 <table>
+<tr>
+  <th>Test</th><th>Status</th>
+</tr>
+</table>
+
 | Test  | Status |
 | ------| ------ |
 | Linux |
