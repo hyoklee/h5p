@@ -22,6 +22,7 @@ Windows
 <td>
 ![windows ninja icx ifx parallel sf](https://github.com/hyoklee/hdf5/actions/workflows/win-ninja-icx-f-p-sf.yml/badge.svg)](https://github.com/hyoklee/hdf5/actions/workflows/win-ninja-icx-f-p-sf.yml)
 </td>
+</tr>
 </table>
 
 ## Goals
