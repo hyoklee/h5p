@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.10)
+project(HERMES C)
+include(CTest)
+find_package(MPI REQUIRED)
+find_package(ZLIB REQUIRED)
+include_directories(${MPI_C_INCLUDE_DIRS})
+add_executable(HERMES src/b.c)
+target_link_libraries(HERMES ${MPI_C_LIBRARIES} ${ZLIB_LIBRARIES})
+enable_testing()
+add_test(no_option HERMES)
+
