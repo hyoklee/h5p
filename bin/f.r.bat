@@ -12,7 +12,8 @@ REM mkdir build
 REM cd build
 set PATH=D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\;D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;D:\VS\VC\Tools\MSVC\14.41.34120\bin\Hostx64\x64;%PATH%
 cd d:\hdf5.HDFGroup\build
-d:\cmake\bin\cmake -G Ninja -DCMAKE_C_COMPILER="D:/one/compiler/latest/bin/icx.exe" -DCMAKE_CXX_COMPILER="D:/one/compiler/latest/bin/icx.exe" -DCMAKE_Fortran_COMPILER="D:/one/compiler/2024.2/bin/ifx.exe" -DBUILD_SHARED_LIBS:BOOL=ON  -DHDF5_BUILD_FORTRAN:BOOL=ON  -DHDF5_ENABLE_PARALLEL:BOOL=OFF  -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=OFF -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=OFF -DHDF5_ENABLE_SUBFILING_VFD:BOOL=OFF -D CTEST_DROP_SITE_INIT:STRING="my.cdash.org" -DSITE=win10 -DBUILDNAME="ninja/icx/f" ..
-ctest  -D Continuous
+d:\cmake\bin\cmake -G Ninja -DCMAKE_C_COMPILER="D:/one/compiler/latest/bin/icx.exe" -DCMAKE_CXX_COMPILER="D:/one/compiler/latest/bin/icx.exe" -DCMAKE_Fortran_COMPILER="D:/one/compiler/2024.2/bin/ifx.exe" -DBUILD_SHARED_LIBS:BOOL=ON  -DHDF5_BUILD_FORTRAN:BOOL=ON  -DHDF5_ENABLE_PARALLEL:BOOL=OFF  -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=OFF -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=OFF -DHDF5_ENABLE_SUBFILING_VFD:BOOL=OFF -D CTEST_DROP_SITE_INIT:STRING="my.cdash.org" -DSITE=win-10 -DBUILDNAME="ninja/icx/f" ..
+REM ctest  -D Continuous
+ctest  -D Experimental
 REM cd ..
 
