@@ -1,4 +1,4 @@
-name: swmr_mp
+name: "swmr_mp"
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   analyze:
-    runs-on: windows-latest
+    runs-on: [windows-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
       - name: install hsds
