@@ -50,7 +50,7 @@ if __name__ == "__main__":
     array_dtype = np.int32
 
     # Create the shared memory block *only once*
-    shared_mem = multiprocessing.shared_memory.SharedMemory(create=True, size=np.prod(array_shape) * np.dtype(array_dtype).itemsize)
+    shared_mem = multiprocessing.shared_memory.SharedMemory(create=True, size=int(np.prod(array_shape) * np.dtype(array_dtype).itemsize))
     shared_memory_name = shared_mem.name  # Get the name for the other processes
     shared_array = np.ndarray(array_shape, dtype=array_dtype, buffer=shared_mem.buf) # Create the array in main process so we can initialize it
     shared_array[:] = -1 # Initialize shared memory
