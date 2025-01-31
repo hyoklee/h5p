@@ -1,0 +1,13 @@
+name: swmr_mp
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  analyze:
+    runs-on: windows-latest
+    steps:
+    - name: install hsds
+      run: |
+        pip install hsds
