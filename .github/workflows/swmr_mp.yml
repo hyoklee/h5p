@@ -12,5 +12,6 @@ jobs:
       run: |
         pip install hsds
     - name: start server
+      run: |
         hsds --root_dir ~/hsds_data
-        shell: bash
+      shell: bash
