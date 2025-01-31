@@ -8,14 +8,19 @@ jobs:
   analyze:
     runs-on: windows-latest
     steps:
-    - name: install hsds
-      run: |
-        pip install hsds
-    - name: install h5pyd
-      run: |
-        pip install h5pyd
-    - name: start server
-      run: |
-        mkdir ~/hsds_data
-        hsds --root_dir ~/hsds_data &
-      shell: bash
+      - uses: actions/checkout@v4
+      - name: install hsds
+        run: |
+          pip install hsds
+      - name: install h5pyd
+        run: |
+          pip install h5pyd
+      - name: start server
+        run: |
+          mkdir ~/hsds_data
+          hsds --root_dir ~/hsds_data &
+        shell: bash
+      - name: test
+        run: |
+          python test/swmr_mp.py
+
