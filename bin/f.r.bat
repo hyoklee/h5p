@@ -2,12 +2,12 @@ d:
 set VS2022INSTALLDIR=D:\VS\
 set SETVARSVC="D:\one\setvars-vcvarsall"
 call %SETVARSVC%
-set INCLUDE=D:\VS\VC\Tools\MSVC\14.41.34120\include;%INCLUDE%
-set LIB=D:\one\compiler\2025.0\lib;D:\vs\vc\Tools\MSVC\14.41.34120\lib\onecore\x64;%LIB%
-set LIBPATH=D:\one\mpi\latest\lib;D:\one\compiler\2025.0\lib;D:\vs\vc\Tools\MSVC\14.41.34120\lib\onecore\x64;%LIBPATH%
+set INCLUDE=D:\VS\VC\Tools\MSVC\14.43.34808\include;%INCLUDE%
+set LIB=D:\one\compiler\2025.0\lib;D:\vs\vc\Tools\MSVC\14.43.34808\lib\onecore\x64;%LIB%
+set LIBPATH=D:\one\mpi\latest\lib;D:\one\compiler\2025.0\lib;D:\vs\vc\Tools\MSVC\14.43.34808\lib\onecore\x64;%LIBPATH%
 set SETVARS="D:\one\setvars.bat"
 call %SETVARS%
-set PATH=D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\;D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;D:\VS\VC\Tools\MSVC\14.41.34120\bin\Hostx64\x64;%PATH%
+set PATH=D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\;D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;D:\VS\VC\Tools\MSVC\14.43.34808\bin\Hostx64\x64;%PATH%
 cd d:\hdf5.HDFGroup
 REM rmdir /q /s build
 REM mkdir build
