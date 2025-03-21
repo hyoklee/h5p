@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(h5p C)
 include(CTest)
+find_package(libaec CONFIG)
 find_package(MPI REQUIRED)
 find_package(ZLIB REQUIRED)
 include_directories(${MPI_C_INCLUDE_DIRS})
