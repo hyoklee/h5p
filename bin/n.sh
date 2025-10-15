@@ -8,6 +8,7 @@ export CC=/opt/nvidia/hpc_sdk/Linux_x86_64/25.9/comm_libs/hpcx/bin/mpicc
 export LD_LIBRARY_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/25.9/cuda/13.0/lib64:/opt/nvidia/hpc_sdk/Linux_x86_64/25.9/compilers/lib
 export NVHPCSDK=/opt/nvidia/hpc_sdk
 export PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/25.9/comm_libs/hpcx/bin:/opt/nvidia/hpc_sdk/Linux_x86_64/25.9/compilers/bin:$PATH
+export UCX_WARN_UNUSED_ENV_VARS=n
 
 # Create and enter build directory
 echo "Setting up build directory..."
