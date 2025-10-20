@@ -9,10 +9,10 @@ set SETVARS="D:\one\setvars.bat"
 call %SETVARS%
 set PATH=D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\;D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;D:\VS\VC\Tools\MSVC\14.43.34808\bin\Hostx64\x64;%PATH%
 cd d:\hdf5.HDFGroup
-REM rmdir /q /s build
-REM mkdir build
+rmdir /q /s build
+mkdir build
 cd build
-d:\cmake\bin\cmake -G Ninja -DCMAKE_C_COMPILER="D:/one/compiler/latest/bin/icx.exe" -DCMAKE_CXX_COMPILER="D:/one/compiler/latest/bin/icx.exe" -DCMAKE_Fortran_COMPILER="D:/one/compiler/2025.2/bin/ifx.exe" -DBUILD_SHARED_LIBS:BOOL=ON -DBUILD_STATIC_LIBS:BOOL=ON -DHDF5_BUILD_FORTRAN:BOOL=ON  -DHDF5_BUILD_HL_LIB:BOOL=ON  -DHDF5_ENABLE_PARALLEL:BOOL=OFF  -DHDF5_ENABLE_ZLIB_SUPPORT:BOOL=OFF -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=OFF -DHDF5_ENABLE_SUBFILING_VFD:BOOL=OFF -D CTEST_DROP_SITE_INIT:STRING="my.cdash.org" -DSITE=win-10 -DBUILDNAME="ninja/icx/+st/f/h/-sz-zl/-p" ..
+d:\cmake\bin\cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=D:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_C_COMPILER="D:/one/compiler/latest/bin/icx.exe" -DCMAKE_CXX_COMPILER="D:/one/compiler/latest/bin/icx.exe" -DCMAKE_Fortran_COMPILER="D:/one/compiler/2025.2/bin/ifx.exe" -DBUILD_SHARED_LIBS:BOOL=ON -DBUILD_STATIC_LIBS:BOOL=ON -DHDF5_BUILD_FORTRAN:BOOL=ON  -DHDF5_BUILD_HL_LIB:BOOL=ON  -DHDF5_ENABLE_PARALLEL:BOOL=OFF  -DHDF5_ENABLE_ZLIB_SUPPORT:BOOL=ON -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=ON -DHDF5_ENABLE_SUBFILING_VFD:BOOL=OFF -DHDF5_ENABLE_ALL_WARNINGS=ON -DHDF5_ENABLE_DEBUG_APIS:BOOL=ON -DHDF5_ENABLE_DEV_WARNINGS=ON -DHDF5_TEST_VFD:BOOL=ON -D CTEST_DROP_SITE_INIT:STRING="my.cdash.org" -DSITE=win-10 -DBUILDNAME="ninja/icx/ifx/st/h/zl/sz/tv/aw/da/dw" ..
 ctest  -D Continuous
 REM ctest  -D Experimental
 cd ..
