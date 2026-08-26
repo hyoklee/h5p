@@ -12,6 +12,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # hsds pins numcodecs<=0.15.1, which has no wheels for 3.14+
+          # and fails to build from source.
+          python-version: '3.13'
       - name: install hsds
         run: |
           pip install hsds
