@@ -16,7 +16,7 @@ jobs:
         sudo apt install python3-h5py python3-mpi4py
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
     - name: Test demo_h5
       run: |
         python test/demo_h5.py
