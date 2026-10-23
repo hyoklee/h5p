@@ -15,5 +15,5 @@ set LIBPATH=D:\one\mpi\latest\lib;D:\one\compiler\latest\lib;D:\vs\vc\Tools\MSVC
 set SETVARS="D:\one\setvars.bat"
 call %SETVARS%
 set PATH=D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\;D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;D:\VS\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64;%PATH%
-d:\cmake\bin\cmake --build d:\clio-core\build --target clio_run
+D:\VS\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe --build d:\clio-core\build --target clio_run
 exit /b %ERRORLEVEL%
