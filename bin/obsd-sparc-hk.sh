@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Build and test hyoklee/hdf5 develop on the OpenBSD 8.0 sparc64 QEMU VM and
-# submit to CDash as site obsd-8.0.sparc, build hk/sparc64/develop.
+# submit to CDash as site obsd-8.0.sparc64, build hk/develop (with zlib).
 #
 # Meant for cron. A run takes about 15 hours (build plus tests on one emulated
 # CPU), so this script only starts it in the guest and returns. Later calls
@@ -19,8 +19,8 @@ set -u
 
 SRC=${SRC:-$HOME/hdf5}            # clone with origin = hyoklee/hdf5
 REF=${REF:-origin/develop}
-SITE=obsd-8.0.sparc
-BUILDNAME=hk/sparc64/develop
+SITE=obsd-8.0.sparc64
+BUILDNAME=hk/develop
 HOST=openbsd-8.0-sparc64          # ~/.ssh/config.d entry (127.0.0.1:10022)
 STATE=$HOME/.cache/obsd-sparc-hk
 
@@ -95,6 +95,7 @@ echo "=== $COMMIT start \$(date)"
 cmake -DCMAKE_BUILD_TYPE=Release \\
   -DCTEST_DROP_SITE_INIT:STRING="my.cdash.org" \\
   -DCTEST_DROP_LOCATION_INIT:STRING="/submit.php?project=HDF5" \\
+  -DHDF5_ENABLE_ZLIB_SUPPORT:BOOL=ON \\
   -DSITE:STRING="$SITE" -DBUILDNAME:STRING="$BUILDNAME" ..
 ctest -D Experimental -C Release -j1 --timeout 10800
 echo "=== $COMMIT ctest rc=\$? end \$(date)"
