@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 # Build and test hyoklee/hdf5 develop on the OpenBSD 8.0 sparc64 QEMU VM and
-# submit to CDash as site obsd-8.0.sparc64, build hk/develop (with zlib).
+# submit to CDash as site obsd-8.0.sparc64, build hk/develop (with zlib and
+# szip from libaec).
 #
 # Meant for cron. A run takes about 15 hours (build plus tests on one emulated
 # CPU), so this script only starts it in the guest and returns. Later calls
@@ -88,6 +89,8 @@ gssh "cat > /home/obsd-sparc-hk-guest.sh" <<EOF
 #!/bin/sh
 cd /home || exit 1
 rm -rf hdf5-hk && tar xzf hdf5-hk.tgz && rm hdf5-hk.tgz || exit 1
+# libaec provides szip; -I installs it non-interactively, no-op if present
+pkg_add -I libaec || exit 1
 cd hdf5-hk
 sed -i 's/HDF5_ALARM_SECONDS=3600/HDF5_ALARM_SECONDS=0/g' test/CMakeTests.cmake
 mkdir build && cd build
@@ -96,6 +99,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \\
   -DCTEST_DROP_SITE_INIT:STRING="my.cdash.org" \\
   -DCTEST_DROP_LOCATION_INIT:STRING="/submit.php?project=HDF5" \\
   -DHDF5_ENABLE_ZLIB_SUPPORT:BOOL=ON \\
+  -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=ON \\
   -DSITE:STRING="$SITE" -DBUILDNAME:STRING="$BUILDNAME" ..
 ctest -D Experimental -C Release -j1 --timeout 10800
 echo "=== $COMMIT ctest rc=\$? end \$(date)"
