@@ -11,6 +11,11 @@
 #
 #   0 1 * * * $HOME/h5p/bin/obsd-sparc-hk.sh >> $HOME/.cache/obsd-sparc-hk/cron.log 2>&1
 #
+# PR=<number> tests the head of that HDFGroup/hdf5 pull request instead, as
+# build <number>, keeping its own record of the last commit tested:
+#
+#   PR=6698 $HOME/h5p/bin/obsd-sparc-hk.sh
+#
 # The VM must run the locally patched qemu-system-sparc64 (BQL around the
 # SOFTINT helpers); the stock anyvm binary loses a tick and the guest clock
 # stops after a day or two. If the VM is down it is restored from the
@@ -18,10 +23,20 @@
 
 set -u
 
-SRC=${SRC:-$HOME/hdf5}            # clone with origin = hyoklee/hdf5
-REF=${REF:-origin/develop}
+SRC=${SRC:-$HOME/hdf5}            # clone with origin = hyoklee/hdf5, upstream = HDFGroup/hdf5
+PR=${PR:-}
 SITE=obsd-8.0.sparc64
-BUILDNAME=hk/develop
+if [ -n "$PR" ]; then
+  REF=upstream/pr/$PR
+  FETCH=(upstream "+pull/$PR/head:refs/remotes/$REF")
+  BUILDNAME=$PR
+  TAG=-pr$PR
+else
+  REF=origin/develop
+  FETCH=(origin develop)
+  BUILDNAME=hk/develop
+  TAG=
+fi
 HOST=openbsd-8.0-sparc64          # ~/.ssh/config.d entry (127.0.0.1:10022)
 STATE=$HOME/.cache/obsd-sparc-hk
 
@@ -70,9 +85,9 @@ if gssh 'pgrep -f "obsd-sparc-hk-gues[t].sh"' > /dev/null; then
   exit 0
 fi
 
-git -C "$SRC" fetch -q origin develop || { log "ERROR: git fetch failed"; exit 1; }
+git -C "$SRC" fetch -q "${FETCH[@]}" || { log "ERROR: git fetch failed"; exit 1; }
 COMMIT=$(git -C "$SRC" rev-parse --short=11 "$REF")
-if [ "${FORCE:-0}" != 1 ] && [ "$COMMIT" = "$(cat "$STATE/last-commit" 2>/dev/null)" ]; then
+if [ "${FORCE:-0}" != 1 ] && [ "$COMMIT" = "$(cat "$STATE/last-commit$TAG" 2>/dev/null)" ]; then
   log "$REF $COMMIT already tested; skipping"
   exit 0
 fi
@@ -105,9 +120,9 @@ ctest -D Experimental -C Release -j1 --timeout 10800
 echo "=== $COMMIT ctest rc=\$? end \$(date)"
 EOF
 
-GLOG=/home/obsd-sparc-hk-$(date -u +%Y%m%d).log
-gssh "chmod +x /home/obsd-sparc-hk-guest.sh; ls -t /home/obsd-sparc-hk-2*.log 2>/dev/null | tail -n +8 | xargs rm -f;
+GLOG=/home/obsd-sparc-hk$TAG-$(date -u +%Y%m%d).log
+gssh "chmod +x /home/obsd-sparc-hk-guest.sh; ls -t /home/obsd-sparc-hk-*.log 2>/dev/null | tail -n +8 | xargs rm -f;
   nohup /home/obsd-sparc-hk-guest.sh > $GLOG 2>&1 < /dev/null &" ||
   { log "ERROR: starting the guest run failed"; exit 1; }
-echo "$COMMIT" > "$STATE/last-commit"
+echo "$COMMIT" > "$STATE/last-commit$TAG"
 log "started $REF $COMMIT in the VM, log $GLOG"
