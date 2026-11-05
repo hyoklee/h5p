@@ -111,7 +111,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \\
   -DHDF5_ENABLE_ZLIB_SUPPORT:BOOL=ON \\
   -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=ON \\
   -DSITE:STRING="$SITE" -DBUILDNAME:STRING="$BUILDNAME" ..
-MAKEFLAGS=-j2 ctest -D Experimental -C Release -j2 --timeout 10800
+CMAKE_BUILD_PARALLEL_LEVEL=2 ctest -D Experimental -C Release -j2 --timeout 10800
 echo "=== $COMMIT ctest rc=\$? end \$(date)"
 EOF
 

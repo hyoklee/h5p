@@ -40,7 +40,7 @@ PORT=10023
 STATE=$HOME/.cache/obsd-aarch64-hk
 
 ANYVM=$HOME/.cache/anyvm-obsd/anyvm.py
-VMDIR=$HOME/.cache/anyvm-obsd/aarch64/openbsd/v2.1.1
+DATADIR=$HOME/.cache/anyvm-obsd   # images land in $DATADIR/aarch64/openbsd/<builder tag>/
 
 log() { echo "$(date -u '+%F %T') $*"; }
 gssh() { ssh -o ConnectTimeout=30 -o LogLevel=ERROR "$HOST" "$@"; }
@@ -61,13 +61,15 @@ if ! gssh true 2>/dev/null; then
   log "starting VM with anyvm"
   PATH=$HOME/.local/qemu/bin:$HOME/miniconda3/bin:$PATH \
     python3 "$ANYVM" --os openbsd --release 8.0 --arch aarch64 \
-      --mem 2048 --cpu 2 --ssh-port $PORT -d >> "$STATE/anyvm.log" 2>&1 ||
+      --mem 2048 --cpu 2 --ssh-port $PORT --data-dir "$DATADIR" -d >> "$STATE/anyvm.log" 2>&1 ||
     { log "ERROR: anyvm failed to start the VM (see $STATE/anyvm.log)"; exit 1; }
+  KEY=$(ls -t "$DATADIR"/aarch64/openbsd/*/"$HOST-host.id_rsa" 2>/dev/null | head -1)
+  [ -n "$KEY" ] || { log "ERROR: no ssh key for $HOST under $DATADIR"; exit 1; }
   rm -f "$HOME/.ssh/config.d/$PORT.conf"
   printf '%s\n' "Host $HOST" "  StrictHostKeyChecking no" "  UserKnownHostsFile /dev/null" \
     "  ConnectTimeout 60" "  ConnectionAttempts 3" "  ServerAliveInterval 30" \
     "  ServerAliveCountMax 6" "  User root" "  HostName 127.0.0.1" "  Port $PORT" \
-    "  IdentityFile $VMDIR/$HOST-host.id_rsa" > "$HOME/.ssh/config.d/$HOST.conf"
+    "  IdentityFile $KEY" > "$HOME/.ssh/config.d/$HOST.conf"
   chmod 600 "$HOME/.ssh/config.d/$HOST.conf"
   gssh true 2>/dev/null || { log "ERROR: VM did not come up"; exit 1; }
 fi
@@ -109,7 +111,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \\
   -DHDF5_ENABLE_ZLIB_SUPPORT:BOOL=ON \\
   -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=ON \\
   -DSITE:STRING="$SITE" -DBUILDNAME:STRING="$BUILDNAME" ..
-MAKEFLAGS=-j2 ctest -D Experimental -C Release -j2 --timeout 10800
+CMAKE_BUILD_PARALLEL_LEVEL=2 ctest -D Experimental -C Release -j2 --timeout 10800
 echo "=== $COMMIT ctest rc=\$? end \$(date)"
 EOF
 
