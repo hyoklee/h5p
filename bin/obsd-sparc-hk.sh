@@ -48,6 +48,7 @@ log() { echo "$(date -u '+%F %T') $*"; }
 gssh() { ssh -o ConnectTimeout=30 -o LogLevel=ERROR "$HOST" "$@"; }
 
 mkdir -p "$STATE"
+# fd 9 holds the lock; QEMU is started with 9>&- so the daemon does not keep it
 exec 9> "$STATE/lock"
 flock -n 9 || { log "another instance is running"; exit 0; }
 
@@ -72,7 +73,7 @@ if ! gssh true 2>/dev/null; then
     -device e1000,netdev=net0,bus=pciB -boot order=c \
     -bios $VMDIR/openbios-sparc64.elf -display none \
     -monitor tcp:127.0.0.1:4444,server,nowait,nodelay \
-    -loadvm booted -daemonize || { log "ERROR: QEMU failed to start"; exit 1; }
+    -loadvm booted -daemonize 9>&- || { log "ERROR: QEMU failed to start"; exit 1; }
   for i in $(seq 30); do gssh true 2>/dev/null && break; sleep 10; done
   gssh true 2>/dev/null || { log "ERROR: VM did not come up"; exit 1; }
   # The snapshot restores the guest clock from when it was saved

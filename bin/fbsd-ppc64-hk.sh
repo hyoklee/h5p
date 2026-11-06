@@ -16,9 +16,8 @@
 #
 #   PR=6698 $HOME/h5p/bin/fbsd-ppc64-hk.sh
 #
-# The VM is the anyvm-org/freebsd-builder 15.1 powerpc64 image, started with
-# anyvm.py (2 GB; anyvm forces 1 vCPU for powerpc64 under TCG) on the
-# user-local QEMU 8.2 in ~/.local/qemu/bin.
+# The VM is the anyvm-org/freebsd-builder 15.1 powerpc64 image run with the
+# user-local QEMU 8.2 in ~/.local/qemu/bin (2 GB, 1 vCPU), ssh on 127.0.0.1 only.
 
 set -u
 
@@ -40,38 +39,48 @@ HOST=freebsd-15.1-powerpc64       # ~/.ssh/config.d entry (127.0.0.1:10025)
 PORT=10025
 STATE=$HOME/.cache/fbsd-ppc64-hk
 
-ANYVM=$HOME/.cache/anyvm-obsd/anyvm.py
-DATADIR=$HOME/.cache/anyvm-obsd   # images land in $DATADIR/powerpc64/freebsd/<builder tag>/
+# image, keys and profile from anyvm-org/freebsd-builder v2.2.8 (fetched once with anyvm.py)
+VMDIR=$HOME/.cache/anyvm-obsd/freebsd/v2.2.8
+QEMU=$HOME/.local/qemu/bin/qemu-system-ppc64
 
 log() { echo "$(date -u '+%F %T') $*"; }
 gssh() { ssh -o ConnectTimeout=30 -o LogLevel=ERROR "$HOST" "$@"; }
 
 mkdir -p "$STATE"
+# fd 9 holds the lock; QEMU is started with 9>&- so the daemon does not keep it
 exec 9> "$STATE/lock"
 flock -n 9 || { log "another instance is running"; exit 0; }
 
-# Start the VM with anyvm if it is not up. anyvm downloads the image on
-# first use, boots it and waits for ssh. It also writes ssh config with a
-# global "Host *" block that hands this VM's key to every host, so replace
-# its config with a block for this VM only.
+# Boot the VM if it is not up. QEMU is run directly rather than through
+# anyvm: anyvm forwards ssh on every LAN address and opens a VNC web UI, and
+# the image's root key is public. Settings follow the image's anyvm profile
+# (pseries, power9, virtio, SLOF firmware); one vCPU, as anyvm uses for TCG.
 if ! gssh true 2>/dev/null; then
   if pgrep -f "qemu-system-ppc64 .*-name $HOST" > /dev/null; then
     log "ERROR: VM process is up but ssh fails; not running"
     exit 1
   fi
-  log "starting VM with anyvm"
-  PATH=$HOME/.local/qemu/bin:$HOME/miniconda3/bin:$PATH \
-    python3 "$ANYVM" --os freebsd --release 15.1 --arch powerpc64 \
-      --mem 2048 --ssh-port $PORT --data-dir "$DATADIR" -d >> "$STATE/anyvm.log" 2>&1 ||
-    { log "ERROR: anyvm failed to start the VM (see $STATE/anyvm.log)"; exit 1; }
-  KEY=$(ls -t "$DATADIR"/powerpc64/freebsd/*/"$HOST-host.id_rsa" 2>/dev/null | head -1)
-  [ -n "$KEY" ] || { log "ERROR: no ssh key for $HOST under $DATADIR"; exit 1; }
-  rm -f "$HOME/.ssh/config.d/$PORT.conf"
-  printf '%s\n' "Host $HOST" "  StrictHostKeyChecking no" "  UserKnownHostsFile /dev/null" \
-    "  ConnectTimeout 60" "  ConnectionAttempts 3" "  ServerAliveInterval 30" \
-    "  ServerAliveCountMax 6" "  User root" "  HostName 127.0.0.1" "  Port $PORT" \
-    "  IdentityFile $KEY" > "$HOME/.ssh/config.d/$HOST.conf"
-  chmod 600 "$HOME/.ssh/config.d/$HOST.conf"
+  [ -f "$VMDIR/$HOST.qcow2" ] || { log "ERROR: no image $VMDIR/$HOST.qcow2"; exit 1; }
+  log "booting VM"
+  "$QEMU" \
+    -chardev socket,id=serial0,host=127.0.0.1,port=7003,server=on,wait=off,logfile=$VMDIR/$HOST.serial.log \
+    -serial chardev:serial0 -monitor tcp:127.0.0.1:4446,server,nowait,nodelay \
+    -name $HOST -m 2048 -smp 1 -rtc base=utc,clock=host \
+    -machine pseries,accel=tcg,usb=off,cap-cfpc=broken,cap-sbbc=broken,cap-ibs=broken,cap-ccf-assist=off \
+    -cpu power9 \
+    -netdev user,id=net0,ipv6=off,hostfwd=tcp:127.0.0.1:$PORT-:22 \
+    -device virtio-net-pci,netdev=net0,romfile= \
+    -object rng-random,id=rng0,filename=/dev/urandom -device virtio-rng-pci,rng=rng0 \
+    -drive file=$VMDIR/$HOST.qcow2,format=qcow2,if=virtio \
+    -vga none -display none -daemonize 9>&- || { log "ERROR: QEMU failed to start"; exit 1; }
+  if [ ! -f "$HOME/.ssh/config.d/$HOST.conf" ]; then
+    printf '%s\n' "Host $HOST" "  StrictHostKeyChecking no" "  UserKnownHostsFile /dev/null" \
+      "  ConnectTimeout 60" "  ConnectionAttempts 3" "  ServerAliveInterval 30" \
+      "  ServerAliveCountMax 6" "  User root" "  HostName 127.0.0.1" "  Port $PORT" \
+      "  IdentityFile $VMDIR/$HOST-host.id_rsa" > "$HOME/.ssh/config.d/$HOST.conf"
+    chmod 600 "$HOME/.ssh/config.d/$HOST.conf"
+  fi
+  for i in $(seq 90); do gssh true 2>/dev/null && break; sleep 20; done
   gssh true 2>/dev/null || { log "ERROR: VM did not come up"; exit 1; }
 fi
 
@@ -101,8 +110,25 @@ gssh "cat > /home/fbsd-ppc64-hk-guest.sh" <<EOF
 #!/bin/sh
 cd /home || exit 1
 rm -rf hdf5-hk && tar xzf hdf5-hk.tgz && rm hdf5-hk.tgz || exit 1
-# libaec provides szip; pkg is a no-op for packages already installed
-env ASSUME_ALWAYS_YES=yes pkg install -y cmake libaec || exit 1
+# pkg.FreeBSD.org has no ports packages for powerpc64, so the first run
+# builds cmake and libaec (szip) from source into /usr/local; the VM disk
+# keeps them for later runs.
+if ! command -v cmake > /dev/null; then
+  (set -e; cd /tmp
+   get() { fetch -q -o "\$2" "\$1"; [ "\$(sha256 -q "\$2")" = "\$3" ]; tar xzf "\$2"; }
+   get https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6.tar.gz \\
+     cmake.tgz 653427f0f5014750aafff22727fb2aa60c6c732ca91808cfb78ce22ddd9e55f0
+   cd cmake-3.31.6
+   ./bootstrap --prefix=/usr/local --no-qt-gui -- -DCMAKE_BUILD_TYPE=Release \\
+     -DBUILD_TESTING=OFF -DCMAKE_USE_OPENSSL=ON
+   make install
+   cd /tmp
+   get https://github.com/MathisRosenhauer/libaec/releases/download/v1.1.4/libaec-1.1.4.tar.gz \\
+     libaec.tgz 1b9f3b913d9111469a83820ab62bb6a9f3ec7a5f9b6d681761776aecbc7fefbe
+   cmake -S libaec-1.1.4 -B libaec-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+   cmake --build libaec-build && cmake --install libaec-build
+   rm -rf /tmp/cmake* /tmp/libaec*) || exit 1
+fi
 cd hdf5-hk
 sed -i '' 's/HDF5_ALARM_SECONDS=3600/HDF5_ALARM_SECONDS=0/g' test/CMakeTests.cmake
 mkdir build && cd build

@@ -47,6 +47,7 @@ log() { echo "$(date -u '+%F %T') $*"; }
 gssh() { ssh -o ConnectTimeout=30 -o LogLevel=ERROR "$HOST" "$@"; }
 
 mkdir -p "$STATE"
+# fd 9 holds the lock; QEMU is started with 9>&- so the daemon does not keep it
 exec 9> "$STATE/lock"
 flock -n 9 || { log "another instance is running"; exit 0; }
 
@@ -69,7 +70,7 @@ if ! gssh true 2>/dev/null; then
     -device virtio-net-pci,netdev=net0,romfile= -device virtio-balloon-pci \
     -kernel $QROOT/usr/lib/u-boot/qemu-riscv64_smode/uboot.elf \
     -drive file=$VMDIR/openbsd-8.0-riscv64.qcow2,format=qcow2,if=virtio,discard=unmap,detect-zeroes=unmap \
-    -display none -daemonize || { log "ERROR: QEMU failed to start"; exit 1; }
+    -display none -daemonize 9>&- || { log "ERROR: QEMU failed to start"; exit 1; }
   for i in $(seq 60); do gssh true 2>/dev/null && break; sleep 20; done
   gssh true 2>/dev/null || { log "ERROR: VM did not come up"; exit 1; }
 fi
