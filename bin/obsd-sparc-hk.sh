@@ -57,13 +57,14 @@ if [ "$(sha256sum "$QEMU" | cut -d' ' -f1)" != "$QEMU_SHA256" ]; then
   exit 1
 fi
 
-# Start the VM from the "booted" snapshot if it is not up.
+# Boot the VM if it is not up. This is a cold boot: restoring the "booted"
+# snapshot hung the guest on disk and NIC timeouts (2026-11-06).
 if ! gssh true 2>/dev/null; then
   if pgrep -f "^$QEMU .*-name openbsd-8.0-sparc64" > /dev/null; then
     log "ERROR: VM process is up but ssh fails; not running"
     exit 1
   fi
-  log "starting VM from snapshot 'booted'"
+  log "booting VM"
   "$QEMU" \
     -chardev socket,id=serial0,host=127.0.0.1,port=7000,server=on,wait=off,logfile=$VMDIR/openbsd-8.0-sparc64.serial.log \
     -serial chardev:serial0 -name openbsd-8.0-sparc64 -smp 1 -m 1024 \
@@ -73,10 +74,10 @@ if ! gssh true 2>/dev/null; then
     -device e1000,netdev=net0,bus=pciB -boot order=c \
     -bios $VMDIR/openbios-sparc64.elf -display none \
     -monitor tcp:127.0.0.1:4444,server,nowait,nodelay \
-    -loadvm booted -daemonize 9>&- || { log "ERROR: QEMU failed to start"; exit 1; }
-  for i in $(seq 30); do gssh true 2>/dev/null && break; sleep 10; done
+    -daemonize 9>&- || { log "ERROR: QEMU failed to start"; exit 1; }
+  for i in $(seq 60); do gssh true 2>/dev/null && break; sleep 20; done
   gssh true 2>/dev/null || { log "ERROR: VM did not come up"; exit 1; }
-  # The snapshot restores the guest clock from when it was saved
+  # Set the guest clock in case it drifted under emulation
   gssh "date -u $(date -u +%Y%m%d%H%M.%S)" > /dev/null
 fi
 
