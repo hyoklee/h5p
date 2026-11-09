@@ -129,6 +129,9 @@ if ! command -v cmake > /dev/null; then
    cmake --build libaec-build && cmake --install libaec-build
    rm -rf /tmp/cmake* /tmp/libaec*) || exit 1
 fi
+# Add /usr/local/lib to the runtime linker's cache, or programs linked to
+# libhdf5 fail with "libsz.so.2 not found" (until the next reboot)
+ldconfig -m /usr/local/lib
 cd hdf5-hk
 sed -i '' 's/HDF5_ALARM_SECONDS=3600/HDF5_ALARM_SECONDS=0/g' test/CMakeTests.cmake
 mkdir build && cd build
