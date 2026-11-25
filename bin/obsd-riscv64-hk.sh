@@ -7,7 +7,8 @@
 # Meant for cron. A run takes many hours (build plus tests on two emulated
 # CPUs), so this script only starts it in the guest and returns. Later calls
 # skip while a run is still going, and skip when develop has not changed
-# since the last run (FORCE=1 runs anyway).
+# since the last run (FORCE=1 runs anyway); in that case the VM is not
+# booted. The guest powers off when its run ends.
 #
 #   0 13 * * * $HOME/h5p/bin/obsd-riscv64-hk.sh >> $HOME/.cache/obsd-riscv64-hk/cron.log 2>&1
 #
@@ -51,6 +52,20 @@ mkdir -p "$STATE"
 exec 9> "$STATE/lock"
 flock -n 9 || { log "another instance is running"; exit 0; }
 
+# A run still going in the VM? ([t] keeps pgrep from matching the remote
+# shell running this very command.) Then: anything new to test?
+if gssh true 2>/dev/null && gssh 'pgrep -f "obsd-riscv64-hk-gues[t].sh"' > /dev/null; then
+  log "previous run still in progress; skipping"
+  exit 0
+fi
+
+git -C "$SRC" fetch -q "${FETCH[@]}" || { log "ERROR: git fetch failed"; exit 1; }
+COMMIT=$(git -C "$SRC" rev-parse --short=11 "$REF")
+if [ "${FORCE:-0}" != 1 ] && [ "$COMMIT" = "$(cat "$STATE/last-commit$TAG" 2>/dev/null)" ]; then
+  log "$REF $COMMIT already tested; skipping"
+  exit 0
+fi
+
 # Boot the VM if it is not up (U-Boot S-mode payload, as openbsd-builder
 # runs it; romfile= because the NIC's iPXE ROM is not installed and the
 # guest does not need it).
@@ -73,19 +88,6 @@ if ! gssh true 2>/dev/null; then
     -display none -daemonize 9>&- || { log "ERROR: QEMU failed to start"; exit 1; }
   for i in $(seq 60); do gssh true 2>/dev/null && break; sleep 20; done
   gssh true 2>/dev/null || { log "ERROR: VM did not come up"; exit 1; }
-fi
-
-# [t] keeps pgrep from matching the remote shell running this very command
-if gssh 'pgrep -f "obsd-riscv64-hk-gues[t].sh"' > /dev/null; then
-  log "previous run still in progress; skipping"
-  exit 0
-fi
-
-git -C "$SRC" fetch -q "${FETCH[@]}" || { log "ERROR: git fetch failed"; exit 1; }
-COMMIT=$(git -C "$SRC" rev-parse --short=11 "$REF")
-if [ "${FORCE:-0}" != 1 ] && [ "$COMMIT" = "$(cat "$STATE/last-commit$TAG" 2>/dev/null)" ]; then
-  log "$REF $COMMIT already tested; skipping"
-  exit 0
 fi
 
 TGZ=$STATE/hdf5-hk.tgz
@@ -118,7 +120,7 @@ EOF
 
 GLOG=/home/obsd-riscv64-hk$TAG-$(date -u +%Y%m%d).log
 gssh "chmod +x /home/obsd-riscv64-hk-guest.sh; ls -t /home/obsd-riscv64-hk-*.log 2>/dev/null | tail -n +8 | xargs rm -f;
-  nohup /home/obsd-riscv64-hk-guest.sh > $GLOG 2>&1 < /dev/null &" ||
+  nohup sh -c '/home/obsd-riscv64-hk-guest.sh > $GLOG 2>&1; sync; shutdown -p now' < /dev/null > /dev/null 2>&1 &" ||
   { log "ERROR: starting the guest run failed"; exit 1; }
 echo "$COMMIT" > "$STATE/last-commit$TAG"
 log "started $REF $COMMIT in the VM, log $GLOG"

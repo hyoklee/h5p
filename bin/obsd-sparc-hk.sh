@@ -7,7 +7,8 @@
 # Meant for cron. A run takes about 15 hours (build plus tests on one emulated
 # CPU), so this script only starts it in the guest and returns. Later calls
 # skip while a run is still going, and skip when develop has not changed
-# since the last run (FORCE=1 runs anyway).
+# since the last run (FORCE=1 runs anyway); in that case the VM is not
+# booted. The guest powers off when its run ends.
 #
 #   0 1 * * * $HOME/h5p/bin/obsd-sparc-hk.sh >> $HOME/.cache/obsd-sparc-hk/cron.log 2>&1
 #
@@ -57,6 +58,20 @@ if [ "$(sha256sum "$QEMU" | cut -d' ' -f1)" != "$QEMU_SHA256" ]; then
   exit 1
 fi
 
+# A run still going in the VM? ([t] keeps pgrep from matching the remote
+# shell running this very command.) Then: anything new to test?
+if gssh true 2>/dev/null && gssh 'pgrep -f "obsd-sparc-hk-gues[t].sh"' > /dev/null; then
+  log "previous run still in progress; skipping"
+  exit 0
+fi
+
+git -C "$SRC" fetch -q "${FETCH[@]}" || { log "ERROR: git fetch failed"; exit 1; }
+COMMIT=$(git -C "$SRC" rev-parse --short=11 "$REF")
+if [ "${FORCE:-0}" != 1 ] && [ "$COMMIT" = "$(cat "$STATE/last-commit$TAG" 2>/dev/null)" ]; then
+  log "$REF $COMMIT already tested; skipping"
+  exit 0
+fi
+
 # Boot the VM if it is not up. This is a cold boot: restoring the "booted"
 # snapshot hung the guest on disk and NIC timeouts (2026-11-06).
 if ! gssh true 2>/dev/null; then
@@ -79,19 +94,6 @@ if ! gssh true 2>/dev/null; then
   gssh true 2>/dev/null || { log "ERROR: VM did not come up"; exit 1; }
   # Set the guest clock in case it drifted under emulation
   gssh "date -u $(date -u +%Y%m%d%H%M.%S)" > /dev/null
-fi
-
-# [t] keeps pgrep from matching the remote shell running this very command
-if gssh 'pgrep -f "obsd-sparc-hk-gues[t].sh"' > /dev/null; then
-  log "previous run still in progress; skipping"
-  exit 0
-fi
-
-git -C "$SRC" fetch -q "${FETCH[@]}" || { log "ERROR: git fetch failed"; exit 1; }
-COMMIT=$(git -C "$SRC" rev-parse --short=11 "$REF")
-if [ "${FORCE:-0}" != 1 ] && [ "$COMMIT" = "$(cat "$STATE/last-commit$TAG" 2>/dev/null)" ]; then
-  log "$REF $COMMIT already tested; skipping"
-  exit 0
 fi
 
 TGZ=$STATE/hdf5-hk.tgz
@@ -124,7 +126,7 @@ EOF
 
 GLOG=/home/obsd-sparc-hk$TAG-$(date -u +%Y%m%d).log
 gssh "chmod +x /home/obsd-sparc-hk-guest.sh; ls -t /home/obsd-sparc-hk-*.log 2>/dev/null | tail -n +8 | xargs rm -f;
-  nohup /home/obsd-sparc-hk-guest.sh > $GLOG 2>&1 < /dev/null &" ||
+  nohup sh -c '/home/obsd-sparc-hk-guest.sh > $GLOG 2>&1; sync; shutdown -p now' < /dev/null > /dev/null 2>&1 &" ||
   { log "ERROR: starting the guest run failed"; exit 1; }
 echo "$COMMIT" > "$STATE/last-commit$TAG"
 log "started $REF $COMMIT in the VM, log $GLOG"
