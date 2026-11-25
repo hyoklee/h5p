@@ -7,9 +7,10 @@
 # Meant for cron. A run takes many hours (build plus tests on one emulated
 # CPU), so this script only starts it in the guest and returns. Later calls
 # skip while a run is still going, and skip when develop has not changed
-# since the last run (FORCE=1 runs anyway).
+# since the last run (FORCE=1 runs anyway); in that case the VM is not
+# booted. The guest powers off when its run ends.
 #
-#   0 13 * * * $HOME/h5p/bin/fbsd-ppc64-hk.sh >> $HOME/.cache/fbsd-ppc64-hk/cron.log 2>&1
+#   0 6 * * * $HOME/h5p/bin/fbsd-ppc64-hk.sh >> $HOME/.cache/fbsd-ppc64-hk/cron.log 2>&1
 #
 # PR=<number> tests the head of that HDFGroup/hdf5 pull request instead, as
 # build <number>, keeping its own record of the last commit tested:
@@ -51,6 +52,20 @@ mkdir -p "$STATE"
 exec 9> "$STATE/lock"
 flock -n 9 || { log "another instance is running"; exit 0; }
 
+# A run still going in the VM? ([t] keeps pgrep from matching the remote
+# shell running this very command.) Then: anything new to test?
+if gssh true 2>/dev/null && gssh 'pgrep -f "fbsd-ppc64-hk-gues[t].sh"' > /dev/null; then
+  log "previous run still in progress; skipping"
+  exit 0
+fi
+
+git -C "$SRC" fetch -q "${FETCH[@]}" || { log "ERROR: git fetch failed"; exit 1; }
+COMMIT=$(git -C "$SRC" rev-parse --short=11 "$REF")
+if [ "${FORCE:-0}" != 1 ] && [ "$COMMIT" = "$(cat "$STATE/last-commit$TAG" 2>/dev/null)" ]; then
+  log "$REF $COMMIT already tested; skipping"
+  exit 0
+fi
+
 # Boot the VM if it is not up. QEMU is run directly rather than through
 # anyvm: anyvm forwards ssh on every LAN address and opens a VNC web UI, and
 # the image's root key is public. Settings follow the image's anyvm profile
@@ -82,19 +97,6 @@ if ! gssh true 2>/dev/null; then
   fi
   for i in $(seq 90); do gssh true 2>/dev/null && break; sleep 20; done
   gssh true 2>/dev/null || { log "ERROR: VM did not come up"; exit 1; }
-fi
-
-# [t] keeps pgrep from matching the remote shell running this very command
-if gssh 'pgrep -f "fbsd-ppc64-hk-gues[t].sh"' > /dev/null; then
-  log "previous run still in progress; skipping"
-  exit 0
-fi
-
-git -C "$SRC" fetch -q "${FETCH[@]}" || { log "ERROR: git fetch failed"; exit 1; }
-COMMIT=$(git -C "$SRC" rev-parse --short=11 "$REF")
-if [ "${FORCE:-0}" != 1 ] && [ "$COMMIT" = "$(cat "$STATE/last-commit$TAG" 2>/dev/null)" ]; then
-  log "$REF $COMMIT already tested; skipping"
-  exit 0
 fi
 
 gssh "mkdir -p /home" || { log "ERROR: cannot reach the VM"; exit 1; }
@@ -148,7 +150,7 @@ EOF
 
 GLOG=/home/fbsd-ppc64-hk$TAG-$(date -u +%Y%m%d).log
 gssh "chmod +x /home/fbsd-ppc64-hk-guest.sh; ls -t /home/fbsd-ppc64-hk-*.log 2>/dev/null | tail -n +8 | xargs rm -f;
-  nohup /home/fbsd-ppc64-hk-guest.sh > $GLOG 2>&1 < /dev/null &" ||
+  nohup sh -c '/home/fbsd-ppc64-hk-guest.sh > $GLOG 2>&1; sync; shutdown -p now' < /dev/null > /dev/null 2>&1 &" ||
   { log "ERROR: starting the guest run failed"; exit 1; }
 echo "$COMMIT" > "$STATE/last-commit$TAG"
 log "started $REF $COMMIT in the VM, log $GLOG"
