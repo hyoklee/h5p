@@ -7,7 +7,9 @@
 # A run takes hours (no KVM here, so the VM is fully emulated). This script
 # only starts the run in the guest and returns. Later calls skip while a run
 # is still going, and skip when develop has not changed since the last run
-# (FORCE=1 runs anyway).
+# (FORCE=1 runs anyway); in that case the VM is not booted. The guest powers
+# off when its run ends, and a host-side watcher then removes the s3proxy
+# container.
 #
 # PR=<number> tests the head of that HDFGroup/hdf5 pull request instead, as
 # build <number>/ros3, keeping its own record of the last commit tested.
@@ -61,6 +63,20 @@ mkdir -p "$STATE"
 exec 9> "$STATE/lock"
 flock -n 9 || { log "another instance is running"; exit 0; }
 
+# A run still going in the VM? ([t] keeps pgrep from matching the remote
+# shell running this very command.) Then: anything new to test?
+if gssh true 2>/dev/null && gssh 'pgrep -f "obsd-amd64-hk-gues[t].sh"' > /dev/null; then
+  log "previous run still in progress; skipping"
+  exit 0
+fi
+
+git -C "$SRC" fetch -q "${FETCH[@]}" || { log "ERROR: git fetch failed"; exit 1; }
+COMMIT=$(git -C "$SRC" rev-parse --short=11 "$REF")
+if [ "${FORCE:-0}" != 1 ] && [ "$COMMIT" = "$(cat "$STATE/last-commit$TAG" 2>/dev/null)" ]; then
+  log "$REF $COMMIT already tested; skipping"
+  exit 0
+fi
+
 # Boot the VM if it is not up. Under TCG the boot loader's 5 s timeout never
 # fires, so press Enter at the boot> prompt through the QEMU monitor.
 if ! gssh true 2>/dev/null; then
@@ -87,19 +103,6 @@ if ! gssh true 2>/dev/null; then
   gssh true 2>/dev/null || { log "ERROR: VM did not come up"; exit 1; }
   # The guest clock is not kept in sync under emulation
   gssh "date -u $(date -u +%Y%m%d%H%M.%S)" > /dev/null
-fi
-
-# [t] keeps pgrep from matching the remote shell running this very command
-if gssh 'pgrep -f "obsd-amd64-hk-gues[t].sh"' > /dev/null; then
-  log "previous run still in progress; skipping"
-  exit 0
-fi
-
-git -C "$SRC" fetch -q "${FETCH[@]}" || { log "ERROR: git fetch failed"; exit 1; }
-COMMIT=$(git -C "$SRC" rev-parse --short=11 "$REF")
-if [ "${FORCE:-0}" != 1 ] && [ "$COMMIT" = "$(cat "$STATE/last-commit$TAG" 2>/dev/null)" ]; then
-  log "$REF $COMMIT already tested; skipping"
-  exit 0
 fi
 
 # S3 test server: start the s3proxy container (localhost only) if needed and
@@ -175,7 +178,13 @@ EOF
 
 GLOG=/home/obsd-amd64-hk$TAG-$(date -u +%Y%m%d).log
 gssh "chmod +x /home/obsd-amd64-hk-guest.sh; ls -t /home/obsd-amd64-hk-*.log 2>/dev/null | tail -n +8 | xargs rm -f;
-  nohup /home/obsd-amd64-hk-guest.sh > $GLOG 2>&1 < /dev/null &" ||
+  nohup sh -c '/home/obsd-amd64-hk-guest.sh > $GLOG 2>&1; sync; shutdown -p now' < /dev/null > /dev/null 2>&1 &" ||
   { log "ERROR: starting the guest run failed"; exit 1; }
 echo "$COMMIT" > "$STATE/last-commit$TAG"
 log "started $REF $COMMIT in the VM, log $GLOG"
+
+# When the guest has powered off and QEMU has exited, remove the s3proxy
+# container, unless the other OpenBSD 8.0 VM (amd64 or aarch64), which
+# shares it, is still running. ([m] keeps pgrep from matching this shell.)
+nohup setsid sh -c "while pgrep -f 'qemu-syste[m]-.* -name openbsd-8\\.0-' > /dev/null; do sleep 300; done
+  docker rm -f $S3PROXY > /dev/null 2>&1" < /dev/null > /dev/null 2>&1 9>&- &

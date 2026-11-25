@@ -188,6 +188,8 @@ gssh "chmod +x /home/obsd-aarch64-hk-guest.sh; ls -t /home/obsd-aarch64-hk-*.log
 echo "$COMMIT" > "$STATE/last-commit$TAG"
 log "started $REF $COMMIT in the VM, log $GLOG"
 
-# When the guest has powered off and QEMU has exited, remove the s3proxy container.
-nohup setsid sh -c "while pgrep -f 'qemu-system-aarc[h]64 .*-name $HOST' > /dev/null; do sleep 300; done
+# When the guest has powered off and QEMU has exited, remove the s3proxy
+# container, unless the other OpenBSD 8.0 VM (amd64 or aarch64), which
+# shares it, is still running. ([m] keeps pgrep from matching this shell.)
+nohup setsid sh -c "while pgrep -f 'qemu-syste[m]-.* -name openbsd-8\\.0-' > /dev/null; do sleep 300; done
   docker rm -f $S3PROXY > /dev/null 2>&1" < /dev/null > /dev/null 2>&1 9>&- &
