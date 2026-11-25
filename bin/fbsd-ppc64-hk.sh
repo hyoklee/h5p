@@ -10,7 +10,7 @@
 # since the last run (FORCE=1 runs anyway); in that case the VM is not
 # booted. The guest powers off when its run ends.
 #
-#   0 6 * * * $HOME/h5p/bin/fbsd-ppc64-hk.sh >> $HOME/.cache/fbsd-ppc64-hk/cron.log 2>&1
+#   0 20 * * 0 $HOME/h5p/bin/fbsd-ppc64-hk.sh >> $HOME/.cache/fbsd-ppc64-hk/cron.log 2>&1
 #
 # PR=<number> tests the head of that HDFGroup/hdf5 pull request instead, as
 # build <number>, keeping its own record of the last commit tested:
